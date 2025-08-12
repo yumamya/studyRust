@@ -9,7 +9,7 @@ fn main() {
 
         println!("{}", quiz_mode);
         match quiz_mode {
-            1 => {
+            1 => loop {
                 // 加算
 
                 // 参考にしている技術書の記述ではバージョンが古い（0.8.5）なので、
@@ -32,11 +32,12 @@ fn main() {
                     println!("正解");
 
                     num_of_correct += 1;
+                    break;
                 } else {
                     println!("不正解");
                 }
             }
-            2 => {
+            2 => loop {
                 // 減算
                 let op1 = rand::rng().random_range(0..100);
                 let op2 = rand::rng().random_range(0..100);
@@ -54,6 +55,7 @@ fn main() {
                     println!("正解");
 
                     num_of_correct += 1;
+                    break;
                 } else {
                     println!("不正解");
                 }
