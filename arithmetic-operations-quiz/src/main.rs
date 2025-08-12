@@ -5,58 +5,60 @@ fn main() {
     let mut num_of_correct = 0;
 
     while num_of_correct < 3 {
-        // 参考にしている技術書の記述ではバージョンが古い（0.8.5）なので、
-        // 最新のrand（0.9.2）を利用しているとここがwarningになる
-        // 下記の記述でwarning解消できる
-        let op1 = rand::rng().random_range(0..100);
-        let op2 = rand::rng().random_range(0..100);
+        let quiz_mode = rand::rng().random_range(1..=2);
 
-        // 加算
-        println!("{} + {} = ??", op1, op2);
-        println!("?? の値を入力して下さい");
-        let mut ans_input = String::new(); // ユーザからの回答を保持する変数
-        // 標準入力から1行取得し、ans_input に代入する
-        std::io::stdin().read_line(&mut ans_input).unwrap();
+        println!("{}", quiz_mode);
+        match quiz_mode {
+            1 => {
+                // 加算
 
-        // ans_input からtrim()で改行を取り除きparse()で整数（u32）型に変換する
-        let ans_input = ans_input.trim().parse::<u32>().unwrap();
+                // 参考にしている技術書の記述ではバージョンが古い（0.8.5）なので、
+                // 最新のrand（0.9.2）を利用しているとここがwarningになる
+                // 下記の記述でwarning解消できる
+                let op1 = rand::rng().random_range(0..100);
+                let op2 = rand::rng().random_range(0..100);
 
-        dbg!(ans_input); // 実行後にキーボードで入力した値を確認できる
-        if ans_input == op1 + op2 {
-            println!("正解");
+                println!("{} + {} = ??", op1, op2);
+                println!("?? の値を入力して下さい");
+                let mut ans_input = String::new(); // ユーザからの回答を保持する変数
+                // 標準入力から1行取得し、ans_input に代入する
+                std::io::stdin().read_line(&mut ans_input).unwrap();
 
-            num_of_correct += 1;
+                // ans_input からtrim()で改行を取り除きparse()で整数（u32）型に変換する
+                let ans_input = ans_input.trim().parse::<u32>().unwrap();
 
-            if num_of_correct >= 3 {
-                break;
+                dbg!(ans_input); // 実行後にキーボードで入力した値を確認できる
+                if ans_input == op1 + op2 {
+                    println!("正解");
+
+                    num_of_correct += 1;
+                } else {
+                    println!("不正解");
+                }
             }
-        } else {
-            println!("不正解");
-        }
+            2 => {
+                // 減算
+                let op1 = rand::rng().random_range(0..100);
+                let op2 = rand::rng().random_range(0..100);
+                println!("{} - {} = ??", op1, op2);
+                println!("?? の値を入力して下さい");
+                let mut ans_input = String::new(); // ユーザからの回答を保持する変数
+                // 標準入力から1行取得し、ans_input に代入する
+                std::io::stdin().read_line(&mut ans_input).unwrap();
 
-        // 減算
-        let op1 = rand::rng().random_range(0..100);
-        let op2 = rand::rng().random_range(0..100);
-        println!("{} - {} = ??", op1, op2);
-        println!("?? の値を入力して下さい");
-        let mut ans_input = String::new(); // ユーザからの回答を保持する変数
-        // 標準入力から1行取得し、ans_input に代入する
-        std::io::stdin().read_line(&mut ans_input).unwrap();
+                // ans_input からtrim()で改行を取り除きparse()で符号付き整数（i32）型に変換する
+                let ans_input = ans_input.trim().parse::<i32>().unwrap();
 
-        // ans_input からtrim()で改行を取り除きparse()で符号付き整数（i32）型に変換する
-        let ans_input = ans_input.trim().parse::<i32>().unwrap();
+                dbg!(ans_input); // 実行後にキーボードで入力した値を確認できる
+                if ans_input == op1 - op2 {
+                    println!("正解");
 
-        dbg!(ans_input); // 実行後にキーボードで入力した値を確認できる
-        if ans_input == op1 - op2 {
-            println!("正解");
-
-            num_of_correct += 1;
-
-            if num_of_correct >= 3 {
-                break;
+                    num_of_correct += 1;
+                } else {
+                    println!("不正解");
+                }
             }
-        } else {
-            println!("不正解");
+            _ => unreachable!(),
         }
     }
 
