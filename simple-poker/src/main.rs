@@ -15,6 +15,7 @@ struct Card {
     rank: i32,
 }
 
+use rand::seq::SliceRandom;
 fn main() {
     // Vecの用意
     let mut deck: Vec<Card> = Vec::new();
@@ -28,5 +29,7 @@ fn main() {
         }
     }
 
+    let mut rng = rand::rng();
+    deck.shuffle(&mut rng);
     println!("{:?}", deck);
 }
