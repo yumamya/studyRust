@@ -23,6 +23,11 @@ fn main() {
             }
         };
         // 結果表示
-        println!(" => {}", result);
+        print_output(result);
     }
+}
+
+// 結果表示
+fn print_output(value: f64) {
+    println!(" => {}", value);
 }
