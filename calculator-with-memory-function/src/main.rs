@@ -15,12 +15,10 @@ fn main() {
 
         // メモリへの書き込み
         if tokens[0] == "mem+" {
-            memory += prev_result;
-            print_output(memory);
+            add_and_print_memory(&mut memory, prev_result);
             continue;
         } else if tokens[0] == "mem-" {
-            memory -= prev_result;
-            print_output(memory);
+            add_and_print_memory(&mut memory, -prev_result);
             continue;
         }
 
@@ -60,4 +58,9 @@ fn eval_expression(left: f64, operator: &str, right: f64) -> f64 {
             unreachable!()
         }
     }
+}
+
+fn add_and_print_memory(memory: &mut f64, prev_result: f64) {
+    *memory += prev_result;
+    print_output(*memory);
 }
