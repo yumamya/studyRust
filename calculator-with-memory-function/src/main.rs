@@ -1,7 +1,7 @@
 use std::io::stdin;
 
 fn main() {
-    let mut memories: Vec<f64> = vec![0.0; 10];
+    let mut memory = Memory::new();
     let mut prev_result: f64 = 0.0;
 
     for line in stdin().lines() {
@@ -16,16 +16,16 @@ fn main() {
         // メモリへの書き込み
         let is_memory = tokens[0].starts_with("mem");
         if is_memory && tokens[0].ends_with('+') {
-            add_and_print_memory(&mut memories, tokens[0], prev_result);
+            memory.add_and_print(tokens[0], prev_result);
             continue;
         } else if is_memory && tokens[0].ends_with('-') {
-            add_and_print_memory(&mut memories, tokens[0], -prev_result);
+            memory.add_and_print(tokens[0], -prev_result);
             continue;
         }
 
         // 式の計算
-        let left = eval_token(tokens[0], &memories);
-        let right = eval_token(tokens[2], &memories);
+        let left = memory.eval_token(tokens[0]);
+        let right = memory.eval_token(tokens[2]);
         let result = eval_expression(left, tokens[1], right);
 
         // 結果表示
@@ -40,12 +40,39 @@ fn print_output(value: f64) {
     println!(" => {}", value);
 }
 
-fn eval_token(token: &str, memories: &[f64]) -> f64 {
-    if token.starts_with("mem") {
-        let slot_index: usize = token[3..].parse().unwrap();
-        memories[slot_index]
-    } else {
-        token.parse().unwrap()
+use std::collections::{hash_map::Entry, HashMap};
+
+struct Memory {
+    slots: HashMap<String, f64>,
+}
+
+impl Memory {
+    fn new() -> Self {
+        Self {
+            slots: HashMap::new(),
+        }
+    }
+    fn add_and_print(&mut self, token: &str, prev_result: f64) {
+        let slot_name = token[3..token.len() - 1].to_string();
+        match self.slots.entry(slot_name) {
+            Entry::Occupied(mut entry) => {
+                *entry.get_mut() += prev_result;
+                print_output(*entry.get());
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(prev_result);
+                print_output(prev_result);
+            }
+        }
+    }
+
+    fn eval_token(&self, token: &str) -> f64 {
+        if token.starts_with("mem") {
+            let slot_name = &token[3..];
+            self.slots.get(slot_name).copied().unwrap_or(0.0)
+        } else {
+            token.parse().unwrap()
+        }
     }
 }
 
@@ -60,10 +87,4 @@ fn eval_expression(left: f64, operator: &str, right: f64) -> f64 {
             unreachable!()
         }
     }
-}
-
-fn add_and_print_memory(memories: &mut [f64], token: &str, prev_result: f64) {
-    let slot_index: usize = token[3..token.len() - 1].parse().unwrap();
-    memories[slot_index] += prev_result;
-    print_output(memories[slot_index]);
 }
