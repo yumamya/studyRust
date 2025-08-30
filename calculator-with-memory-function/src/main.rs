@@ -81,10 +81,14 @@ enum Token {
     Minus,
     Asterisk,
     Slash,
+    LParen,
+    RParen,
 }
 impl Token {
     fn parse(value: &str) -> Self {
         match value {
+            "(" => Self::LParen,
+            ")" => Self::RParen,
             "+" => Self::Plus,
             "-" => Self::Minus,
             "*" => Self::Asterisk,
@@ -111,27 +115,13 @@ impl Token {
                 .collect()
     }
 }
-fn eval_token(token: &Token, memory: &Memory) -> f64 {
-    match token {
-        Token::Number(value) => {
-            // 数値をそのまま返却
-            *value
-        }
-        Token::MemoryRef(memory_name) => {
-            // メモリを参照しているので、メモリの値を返却
-            memory.get(memory_name)
-        }
-        _ => {
-            // 通常ここに到達はしない
-            unreachable!()
-        }
-    }
-}
 fn eval_expression(tokens: &[Token], memory: &Memory) -> f64 {
-    eval_additive_expression(tokens, memory)
+    let (result, index) = eval_additive_expression(tokens, 0, memory);
+    assert_eq!(tokens.len(), index);
+    result
 }
-fn eval_additive_expression (tokens: &[Token], memory: &Memory) -> f64 {
-    let mut index = 0;
+fn eval_additive_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let mut index = index;
     let mut result;
     (result, index) = eval_multiplicative_expression(
         tokens,
@@ -161,24 +151,65 @@ fn eval_additive_expression (tokens: &[Token], memory: &Memory) -> f64 {
             _ => break,
         }
     }
-    result
+    (result, index)
 }
-fn eval_multiplicative_expression (tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+fn eval_multiplicative_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
     let mut index = index;
-    let mut result = eval_token(&tokens[index], memory);
-    index += 1;
+    let mut result;
+    (result, index) = eval_primary_expression(
+        tokens,
+        index,
+        memory,
+    );
     while index < tokens.len() {
         match &tokens[index] {
             Token::Asterisk => {
-                result *= eval_token(&tokens[index + 1], memory);
-                index += 2;
+                let (value, next) = eval_primary_expression(
+                    tokens,
+                    index + 1,
+                    memory,
+                );
+                result *= value;
+                index = next;
             }
             Token::Slash => {
-                result /= eval_token(&tokens[index + 1], memory);
-                index += 2;
+                let (value, next) = eval_primary_expression(
+                    tokens,
+                    index + 1,
+                    memory,
+                );
+                result /= value;
+                index = next;
             }
             _ => break,
         }
     }
     (result, index)
+}
+fn eval_primary_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let first_token = &tokens[index];
+    match first_token {
+        Token::LParen => {
+            // 「(」で始まっているので次のtokenから計算する
+            let (result, next) = eval_additive_expression(
+                tokens,
+                index + 1,
+                memory,
+            );
+            assert_eq!(Token::RParen, tokens[next]);
+            (result, next + 1)
+        }
+        Token::Number(value) => {
+            // 数値なので次のインデックスを返却
+            (*value, index + 1)
+        }
+        Token::MemoryRef(memory_name) => {
+            // メモリ参照なのでメモリの値と次のインデックスを返却
+            (memory.get(memory_name), index + 1)
+        }
+        _ => {
+            // 通常ここにはこない
+            unreachable!()
+        }
+    }
 }
