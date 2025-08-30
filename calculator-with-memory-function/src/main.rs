@@ -29,9 +29,7 @@ fn main() {
             }
             _ => {
                 // 式の値の計算
-                let left = eval_token(&tokens[0], &memory);
-                let right = eval_token(&tokens[2], &memory);
-                let result = eval_expression(left, &tokens[1], right);
+                let result = eval_expression(&tokens, &memory);
                 // 結果の表示
                 print_output(result);
                 prev_result = result;
@@ -129,15 +127,58 @@ fn eval_token(token: &Token, memory: &Memory) -> f64 {
         }
     }
 }
-fn eval_expression(left: f64, operator: &Token, right: f64) -> f64 {
-    match operator {
-        Token::Plus => left + right,
-        Token::Minus => left - right,
-        Token::Asterisk => left * right,
-        Token::Slash => left / right,
-        _ => {
-            // 入力が正しければここには到達しない
-            unreachable!()
+fn eval_expression(tokens: &[Token], memory: &Memory) -> f64 {
+    eval_additive_expression(tokens, memory)
+}
+fn eval_additive_expression (tokens: &[Token], memory: &Memory) -> f64 {
+    let mut index = 0;
+    let mut result;
+    (result, index) = eval_multiplicative_expression(
+        tokens,
+        index,
+        memory,
+    );
+    while index < tokens.len() {
+        match &tokens[index] {
+            Token::Plus => {
+                let (value, next) = eval_multiplicative_expression(
+                    tokens,
+                    index + 1,
+                    memory,
+                );
+                result += value;
+                index = next;
+            }
+            Token::Minus => {
+                let (value, next) = eval_multiplicative_expression(
+                    tokens,
+                    index + 1,
+                    memory,
+                );
+                result -= value;
+                index = next;
+            }
+            _ => break,
         }
     }
+    result
+}
+fn eval_multiplicative_expression (tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let mut index = index;
+    let mut result = eval_token(&tokens[index], memory);
+    index += 1;
+    while index < tokens.len() {
+        match &tokens[index] {
+            Token::Asterisk => {
+                result *= eval_token(&tokens[index + 1], memory);
+                index += 2;
+            }
+            Token::Slash => {
+                result /= eval_token(&tokens[index + 1], memory);
+                index += 2;
+            }
+            _ => break,
+        }
+    }
+    (result, index)
 }
