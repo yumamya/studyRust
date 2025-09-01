@@ -1,10 +1,23 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[clap(version = "1.0")]
-struct Args {
-    arg1: String,
-    arg2: String
+struct App {
+    #[clap(subcommand)]
+    command: Command,
+}
+#[derive(Subcommand)]
+enum Command {
+    /// 新しい口座を作る
+    New,
+    /// 口座に入金
+    Deposit,
+    /// 口座から出金
+    Withdraw,
+    /// CSVからインポート
+    Import,
+    /// レポート出力
+    Report,
 }
 fn main() {
-    let _args = Args::parse();
+    let _args = App::parse();
 }
