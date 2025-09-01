@@ -1,5 +1,10 @@
+use clap::Parser;
+#[derive(Parser)]
+#[clap(version = "1.0")]
+struct Args {
+    arg1: String,
+    arg2: String
+}
 fn main() {
-    for arg in std::env::args() {
-        println!("{}", arg);
-    }
+    let _args = Args::parse();
 }
