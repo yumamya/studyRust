@@ -15,7 +15,7 @@ enum Command {
     /// 口座に入金
     Deposit(DepositArgs),
     /// 口座から出金
-    Withdraw,
+    Withdraw(WithdrawArgs),
     /// CSVからインポート
     Import,
     /// レポート出力
@@ -57,16 +57,36 @@ impl DepositArgs {
         writer.flush().unwrap();
     }
 }
+#[derive(Args)]
+struct WithdrawArgs {
+    account_name: String,
+    date: NaiveDate,
+    usage: String,
+    amount: u32,
+}
+impl WithdrawArgs {
+    fn run(&self) {
+        let open_option = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(format!("{}.csv", self.account_name))
+            .unwrap();
+        let mut writer = Writer::from_writer(open_option);
+        writer.write_record(&[
+            self.date.format("%Y-%m-%d").to_string(),
+            self.usage.to_string(),
+            format!("-{}", self.amount),
+        ])
+        .unwrap();
+    }
+}
 fn main() {
     let args = App::parse();
     match args.command {
         Command::New(args) => args.run(),
         Command::Deposit(args) => args.run(),
-        Command::Withdraw => withdraw(),
+        Command::Withdraw(args) => args.run(),
         Command::Import => unimplemented!(),
         Command::Report => unimplemented!(),
     }
-}
-fn withdraw() {
-    unimplemented!()
 }
