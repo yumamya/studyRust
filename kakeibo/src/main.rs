@@ -1,3 +1,4 @@
+use std::fs::OpenOptions;
 use clap::{Args, Parser, Subcommand};
 use csv::Writer;
 #[derive(Parser)]
@@ -35,18 +36,22 @@ fn main() {
     let args = App::parse();
     match args.command {
         Command::New(args) => args.run(),
-        Command::Deposit => unimplemented!(),
-        Command::Withdraw => unimplemented!(),
+        Command::Deposit => deposit(),
+        Command::Withdraw => withdraw(),
         Command::Import => unimplemented!(),
         Command::Report => unimplemented!(),
     }
 }
-
-// fn new() {
-//     // accounts.csvというファイル名で作成
-//     let mut writer = Writer::from_path("accounts.csv").unwrap();
-//     writer
-//         .write_record(["日付", "用途", "金額"])
-//         .unwrap();
-//     writer.flush().unwrap();
-// }
+fn deposit() {
+    let open_option = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open("口座1.csv")
+        .unwrap();
+    let mut writer = Writer::from_writer(open_option);
+    writer.write_record(["1", "2", "3"]).unwrap();
+    writer.flush().unwrap();
+}
+fn withdraw() {
+    unimplemented!()
+}
