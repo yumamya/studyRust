@@ -1,7 +1,8 @@
-use std::fs::OpenOptions;
+use std::{collections::HashMap, fs::OpenOptions};
 use chrono::NaiveDate;
 use clap::{Args, Parser, Subcommand};
-use csv::{Reader, Writer};
+use csv::{Reader, Writer, WriterBuilder};
+use serde::{Serialize, Deserialize};
 #[derive(Parser)]
 #[clap(version = "1.0")]
 struct App {
@@ -19,7 +20,7 @@ enum Command {
     /// CSVからインポート
     Import(ImportArgs),
     /// レポート出力
-    Report,
+    Report(ReportArgs),
 }
 #[derive(Args)]
 struct NewArgs {
@@ -92,13 +93,41 @@ impl ImportArgs {
             .append(true)
             .open(format!("{}.csv", self.dst_account_name))
             .unwrap();
-        let mut writer = Writer::from_writer(open_option);
+        let mut writer = WriterBuilder::new()
+            .has_headers(false)
+            .from_writer(open_option);
         let mut reader = Reader::from_path(&self.src_file_name).unwrap();
-        for result in reader.records() {
-            let record = result.unwrap();
-            writer.write_record(&record).unwrap();
+        for result in reader.deserialize() {
+            let record: Record = result.unwrap();
+            writer.serialize(record).unwrap();
         }
-        writer.flush().unwrap();
+    }
+}
+#[derive(Serialize, Deserialize)]
+struct Record {
+    日付: NaiveDate,
+    用途: String,
+    金額: i32,
+}
+#[derive(Args)]
+struct ReportArgs {
+    files: Vec<String>,
+}
+impl ReportArgs {
+    fn run(&self) {
+        let mut map = HashMap::new();
+        for file in &self.files {
+            let mut reader = Reader::from_path(file).unwrap();
+            for result in reader.records() {
+                let record = result.unwrap();
+                let amount: i32 = record[2].parse().unwrap();
+                let date: NaiveDate = record[0].parse().unwrap();
+                let sum = map.entry(date.format("%Y-%m").to_string())
+                    .or_insert(0);
+                *sum += amount;
+            }
+        }
+        println!("{:?}", map);
     }
 }
 fn main() {
@@ -108,6 +137,6 @@ fn main() {
         Command::Deposit(args) => args.run(),
         Command::Withdraw(args) => args.run(),
         Command::Import(args) => args.run(),
-        Command::Report => unimplemented!(),
+        Command::Report(args) => args.run(),
     }
 }
