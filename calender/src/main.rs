@@ -32,12 +32,23 @@ struct Cli {
 enum Commands {
     /// 予定一覧表示
     List,
+    /// 予定の追加
+    Add {
+        /// タイトル
+        subject: String,
+        /// 開始時刻
+        start: NaiveDateTime,
+        /// 終了時刻
+        end: NaiveDateTime,
+    },
 }
 
 fn main() {
     let options = Cli::parse();
     match options.command {
         Commands::List => show_list(),
+        Commands::Add { subject, start, end }
+            => add_schedule(subject, start, end),
     }
 }
 
@@ -56,4 +67,33 @@ fn show_list() {
             schedule.id, schedule.start, schedule.end, schedule.subject
         );
     }
+}
+
+fn add_schedule(
+    subject: String,
+    start: NaiveDateTime,
+    end: NaiveDateTime,
+) {
+    // 予定の読み込み
+    let mut calender: Calender = {
+        let file = File::open(SCHEDULE_FILE).unwrap();
+        let reader = BufReader::new(file);
+        serde_json::from_reader(reader).unwrap()
+    };
+
+    // 予定の作成
+    let id = calender.schedules.len() as u64;
+    let new_schedule = Schedule {
+        id, subject, start, end
+    };
+    // 予定の追加
+    calender.schedules.push(new_schedule);
+
+    // 予定の保存
+    {
+        let file = File::create(SCHEDULE_FILE).unwrap();
+        let writer = BufWriter::new(file);
+        serde_json::to_writer(writer, &calender).unwrap();
+    }
+    println!("予定を追加しました");
 }
