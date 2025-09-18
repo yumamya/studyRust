@@ -86,16 +86,16 @@ fn add_schedule(
     let new_schedule = Schedule {
         id, subject, start, end
     };
-    // 予定の追加
-    calender.schedules.push(new_schedule.clone());
-
-    // 予定の重複判定
+        // 予定の重複判定
     for schedule in &calender.schedules {
         if schedule.intersects(&new_schedule) {
             println!("エラー：予定が重複しています");
             return;
         }
-    }
+    };
+    // 予定の追加
+    calender.schedules.push(new_schedule);
+
     // 予定の保存
     {
         let file = File::create(SCHEDULE_FILE).unwrap();
@@ -107,7 +107,7 @@ fn add_schedule(
 
 impl Schedule {
     fn intersects(&self, other: &Schedule) -> bool {
-        self.start < other.end
+        self.start < other.end && other.start < self.end
     }
 }
 
@@ -155,7 +155,7 @@ mod tests {
     fn test_schedule_intersects_2() {
         // 2024/1/1 19:45から20:45までの既存予定1
         let schedule = Schedule {
-            id: 1,
+            id: 2,
             subject: "既存予定".to_string(),
             start: naive_date_time(2024, 1, 1, 19, 45, 0),
             end: naive_date_time(2024, 1, 1, 20, 45, 0),
@@ -177,7 +177,7 @@ mod tests {
     fn test_schedule_intersects_3() {
         // 2024/1/1 18:30から20:15までの既存予定1
         let schedule = Schedule {
-            id: 1,
+            id: 3,
             subject: "既存予定".to_string(),
             start: naive_date_time(2024, 1, 1, 18, 30, 0),
             end: naive_date_time(2024, 1, 1, 20, 15, 0),
@@ -199,7 +199,7 @@ mod tests {
     fn test_schedule_intersects_4() {
         // 2024/1/1 20:15から20:45までの既存予定1
         let schedule = Schedule {
-            id: 1,
+            id: 4,
             subject: "既存予定".to_string(),
             start: naive_date_time(2024, 1, 1, 20, 15, 0),
             end: naive_date_time(2024, 1, 1, 20, 45, 0),
@@ -221,7 +221,7 @@ mod tests {
     fn test_schedule_intersects_5() {
         // 2023/12/8 9:00から10:30までの既存予定1
         let schedule = Schedule {
-            id: 1,
+            id: 5,
             subject: "既存予定".to_string(),
             start: naive_date_time(2023, 12, 8, 9, 0, 0),
             end: naive_date_time(2023, 12, 8, 10, 30, 0),
@@ -235,7 +235,29 @@ mod tests {
             end: naive_date_time(2023, 12, 15, 11, 0, 0),
         };
 
-        // 既存予定１と新規予定は重複している
+        // 既存予定１と新規予定は重複しない
         assert!(!schedule.intersects(&new_schedule));
+    }
+
+    #[test]
+    fn test_schedule_intersects_6() {
+        // 2024/1/1 19:15から19:45までの既存予定1
+        let schedule = Schedule {
+            id: 6,
+            subject: "既存予定".to_string(),
+            start: naive_date_time(2024, 1, 1, 19, 15, 0),
+            end: naive_date_time(2024, 1, 1, 19, 45, 0),
+        };
+
+        // 2024/1/1 19:00から20:00までの新規予定
+        let new_schedule = Schedule {
+            id: 999,
+            subject: "新規予定".to_string(),
+            start: naive_date_time(2024, 1, 1, 19, 0, 0),
+            end: naive_date_time(2024, 1, 1, 20, 0, 0),
+        };
+
+        // 既存予定１と新規予定は重複している
+        assert!(schedule.intersects(&new_schedule));
     }
 }
