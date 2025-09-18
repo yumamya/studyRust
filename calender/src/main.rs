@@ -87,8 +87,15 @@ fn add_schedule(
         id, subject, start, end
     };
     // 予定の追加
-    calender.schedules.push(new_schedule);
+    calender.schedules.push(new_schedule.clone());
 
+    // 予定の重複判定
+    for schedule in &calender.schedules {
+        if schedule.start < new_schedule.end {
+            println!("エラー：予定が重複しています");
+            return;
+        }
+    }
     // 予定の保存
     {
         let file = File::create(SCHEDULE_FILE).unwrap();
