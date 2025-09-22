@@ -41,6 +41,10 @@ enum Commands {
         /// 終了時刻
         end: NaiveDateTime,
     },
+    Delete {
+        /// 予定のID
+        id: u64
+    }
 }
 
 fn main() {
@@ -49,7 +53,28 @@ fn main() {
         Commands::List => show_list(),
         Commands::Add { subject, start, end }
             => add_schedule(subject, start, end),
+        Commands::Delete { id } => {
+            let mut calender = read_calender();
+            if delete_schedule(&mut calender, id) {
+                save_calender(&calender);
+                println!("予定を削除しました");
+            } else {
+                println!("エラー：IDが不正です");
+            }
+        }
     }
+}
+
+fn read_calender() -> Calender {
+    let file = File::open(SCHEDULE_FILE).unwrap();
+    let reader = BufReader::new(file);
+    serde_json::from_reader(reader).unwrap()
+}
+
+fn save_calender(calender: &Calender) {
+    let file = File::create(SCHEDULE_FILE).unwrap();
+    let writer = BufWriter::new(file);
+    serde_json::to_writer(writer, calender).unwrap()
 }
 
 fn show_list() {
@@ -105,6 +130,17 @@ fn add_schedule(
     println!("予定を追加しました");
 }
 
+fn delete_schedule(calender: &mut Calender, id: u64) -> bool {
+    // 予定の削除
+    for i in 0..calender.schedules.len() {
+        if calender.schedules[i].id == id {
+            calender.schedules.remove(i);
+            return true;
+        }
+    }
+    false
+}
+
 impl Schedule {
     fn intersects(&self, other: &Schedule) -> bool {
         self.start < other.end && other.start < self.end
@@ -157,5 +193,69 @@ mod tests {
             end: naive_date_time(2024, 1, 1, h1, m1, 0),
         };
         assert_eq!(should_intersects, schedule.intersects(&new_schedule));
+    }
+
+    #[test]
+    fn test_delete_schedule() {
+        let mut calender = Calender {
+            schedules: vec![
+                Schedule {
+                    id: 0,
+                    subject: "テスト予定".to_string(),
+                    start: naive_date_time(2023, 11, 19, 11, 22, 33),
+                    end: naive_date_time(2023, 11, 19, 22, 33, 44),
+                },
+                Schedule {
+                    id: 1,
+                    subject: "テスト予定".to_string(),
+                    start: naive_date_time(2023, 12, 8, 9, 0, 0),
+                    end: naive_date_time(2023, 12, 8, 10, 30, 0),
+                },
+                Schedule {
+                    id: 2,
+                    subject: "追加テスト予定".to_string(),
+                    start: naive_date_time(2023, 12, 15, 10, 0, 0),
+                    end: naive_date_time(2023, 12, 15, 11, 00, 0),
+                },
+            ],
+        };
+        assert!(delete_schedule(&mut calender, 0));
+
+        let expected = Calender {
+            schedules: vec![
+                Schedule {
+                    id: 1,
+                    subject: "テスト予定".to_string(),
+                    start: naive_date_time(2023, 12, 8, 9, 0, 0),
+                    end: naive_date_time(2023, 12, 8, 10, 30, 0),
+                },
+                Schedule {
+                    id: 2,
+                    subject: "追加テスト予定".to_string(),
+                    start: naive_date_time(2023, 12, 15, 10, 0, 0),
+                    end: naive_date_time(2023, 12, 15, 11, 00, 0),
+                },
+            ],
+        };
+        assert_eq!(expected, calender);
+        // id=1の予定を削除してみる
+        assert!(delete_schedule(&mut calender, 1));
+        let expected = Calender {
+            schedules: vec![
+                Schedule {
+                    id: 2,
+                    subject: "追加テスト予定".to_string(),
+                    start: naive_date_time(2023, 12, 15, 10, 0, 0),
+                    end: naive_date_time(2023, 12, 15, 11, 00, 0),
+                },
+            ],
+        };
+        assert_eq!(expected, calender);
+        // id=2の予定を削除してみる
+        assert!(delete_schedule(&mut calender, 2));
+        let expected = Calender {
+            schedules: vec![],
+        };
+        assert_eq!(expected, calender);
     }
 }
