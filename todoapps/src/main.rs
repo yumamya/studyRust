@@ -1,15 +1,17 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, web, App, HttpResponse, HttpServer};
 use askama::Template;
 use askama_actix::TemplateToResponse;
-
-async fn greet() -> impl Responder {
-    HttpResponse::Ok().body("hello world")
-}
 
 #[derive(Template)]
 #[template(path = "hello.html")]
 struct HelloTemplate {
     name: String,
+}
+
+#[derive(Template)]
+#[template(path = "todo.html")]
+struct TodoTemplete {
+    tasks: Vec<String>,
 }
 
 #[get("/hello/{name}")]
@@ -20,12 +22,23 @@ async fn hello(name: web::Path<String>) -> HttpResponse {
     hello.to_response()
 }
 
+#[get("/")]
+async fn todo() -> HttpResponse {
+    let tasks = vec![
+        "タスク１".to_string(),
+        "タスク２".to_string(),
+        "タスク３".to_string(),
+    ];
+    let todo = TodoTemplete { tasks };
+    todo.to_response()
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .route("/", web::get().to(greet))
             .service(hello)
+            .service(todo)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
