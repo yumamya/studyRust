@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4"
+askama = "0.12"
+askama_actix = "0.14"
