@@ -1,4 +1,4 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use askama::Template;
 use askama_actix::TemplateToResponse;
 use sqlx::{Row, SqlitePool};
@@ -37,6 +37,40 @@ async fn todo(pool: web::Data<SqlitePool>) -> HttpResponse {
     todo.to_response()
 }
 
+#[post("/update")]
+async fn update(pool: web::Data<SqlitePool>, form: web::Form<Task>) -> HttpResponse {
+    let task = form.into_inner();
+
+    if let Some(id) = task.id {
+        sqlx::query("DELETE FROM tasks WHERE task = ?")
+            .bind(id)
+            .execute(pool.as_ref())
+            .await
+            .unwrap();
+    }
+
+    match task.task {
+        Some(task) if !task.is_empty() => {
+            sqlx::query("INSERT INTO tasks (task) VALUES (?)")
+                .bind(task)
+                .execute(pool.as_ref())
+                .await
+                .unwrap();
+        }
+        _ => {}
+    }
+
+    HttpResponse::Found()
+        .append_header(("Location", "/"))
+        .finish()
+}
+
+#[derive(serde::Deserialize)]
+struct Task {
+    id: Option<String>,
+    task: Option<String>,
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
@@ -64,6 +98,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(hello)
             .service(todo)
+            .service(update)
             .app_data(web::Data::new(pool.clone()))
     })
     .bind(("127.0.0.1", 8080))?

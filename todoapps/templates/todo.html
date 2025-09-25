@@ -3,10 +3,17 @@
         <title>TODO</title>
     </head>
     <body>
+        <form action="/update" method="POST">
         <ul>
             {% for task in tasks %}
-            <li>{{ task }}</li>
+            <li>
+                {{ task }}<button type="submit" name="id" value="{{ task }}">Done</button>
+            </li>
             {% endfor %}
         </ul>
+
+        <input type="text" name="task" />
+        <button type="submit">作成</button>
+        </form>
     </body>
 </html>

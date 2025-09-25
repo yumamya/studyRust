@@ -2085,6 +2085,7 @@ dependencies = [
  "actix-web",
  "askama",
  "askama_actix",
+ "serde",
  "sqlx",
 ]
 
