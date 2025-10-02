@@ -9,10 +9,12 @@ fn main() {
     for _ in 0..4 {
         let counter = counter.clone();
         handles.push(thread::spawn(move || {
+            let mut local_counter = 0;
             for _ in 0..2_5000_0000 {
-                let mut writer = counter.lock().unwrap();
-                *writer += 1;
+                local_counter += 1;
             }
+            let mut writer = counter.lock().unwrap();
+            *writer += local_counter;
         }));
     }
     for handle in handles {
